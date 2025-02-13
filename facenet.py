@@ -3,6 +3,7 @@ from os import listdir
 from os.path import isdir
 from numpy import asarray, expand_dims
 import numpy as np
+import pandas as pd
 
 def load_face(filename):
   # carregando imagem de arquivos
@@ -61,8 +62,53 @@ def load_fotos(directory_src):
 
 trainX, trainy = load_fotos(directory_src = "C:\\Users\\tmamo\\Documents\\Projeto2-Novo\\IA\\arquivos\\Faces\\")
 
+from tensorflow.keras.models import load_model
 
+model = load_model('C:\\Users\\tmamo\\Documents\\Projeto2-Novo\\IA\\facenet\\facenet_keras_3.h5')
 
+model.summary()
+
+# FUNÇÃO GERADORA DE EMBEDDINGS
+
+def get_embedding(model, face_pixels):
+
+  # PADRONIZAÇÃO
+  mean, std = face_pixels.mean(), face_pixels.std()
+  face_pixels = (face_pixels - mean)/std
+
+  # TRANSFORMAR A FACE EM 1 ÚNICO EXEMPLO
+
+  # (160,160) -> (1,160,160)
+
+  samples = expand_dims(face_pixels, axis=0)
+
+  # REALIZAR A PREDIÇÃO GERANDO O EMBEDDING
+  yhat = model.predict(samples)
+
+  # [[1,2...128], [1,2..128]]
+
+  return yhat[0]
+
+# GERANDO TODAS AS EMBEDDINGS
+
+newTrainX = list()
+
+for face in trainX:
+  embedding = get_embedding(model, face)
+  newTrainX.append(embedding)
+
+newTrainX = asarray(newTrainX)
+
+newTrainX.shape
+
+# DataFrame
+
+df = pd.DataFrame(data=newTrainX)
+print(df)
+df['target'] = trainy
+print(df)
+
+df.to_csv('faces.csv')
 
 
 
